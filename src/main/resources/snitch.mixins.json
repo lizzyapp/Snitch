@@ -3,6 +3,10 @@
   "package": "io.github.lizzyapp.snitch.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
+  "client": [
+    "ClientModLoaderMixin",
+    "ModLoaderMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   },

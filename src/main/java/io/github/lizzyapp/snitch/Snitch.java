@@ -64,7 +64,6 @@ public class Snitch {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Snitch(IEventBus modEventBus, ModContainer modContainer) {
-        modEventBus.addListener(this::commonSetup);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
@@ -80,8 +79,11 @@ public class Snitch {
         return Config.SNITCH_ON.get().contains(embeddedJar.modId);
     }
 
-    private final List<SnitchRecord> snitchRecordList = new ArrayList<>();
-    private void commonSetup(FMLLoadCompleteEvent event) {
+    private static final List<SnitchRecord> snitchRecordList = new ArrayList<>();
+    public static List<SnitchRecord> getSnitchRecords() {
+        return snitchRecordList;
+    }
+    public static void compileSnitchedMods() {
         ModList modList = ModList.get();
         Optional<? extends ModContainer> myMod = modList.getModContainerById(MODID);
         IModInfo myModInfo = myMod.get().getModInfo();
@@ -108,12 +110,15 @@ public class Snitch {
 
             List<EmbeddedJar> embeddedJarList = findEmbeddedJars(modPath, currentModID);
             if (!embeddedJarList.isEmpty()) {
+                if (Config.DISPLAY_ALL.get()) LOGGER.info("Embedded dependencies of " + currentModID + ": " + embeddedJarList);
                 embeddedJarList.stream().filter(Snitch::tripsDependency).forEach(
-                    (embeddedJar) -> snitchRecordList.add(new SnitchRecord(currentModID, embeddedJar.modId))
+                    (embeddedJar) -> snitchRecordList.add(
+                        new SnitchRecord(currentModID, embeddedJar.modId)
+                    )
                 );
             }
         });
-        LOGGER.info("successfully queried all mod dependencies in {}", (System.currentTimeMillis() - milliseconds));
+        LOGGER.info("successfully queried all mod dependencies in {} ms", (System.currentTimeMillis() - milliseconds));
         LOGGER.info("IT WAS THEM. " + snitchRecordList);
     }
 
@@ -185,7 +190,7 @@ public class Snitch {
         }
     }
 
-    private List<EmbeddedJar> findEmbeddedJars(Path jarPath, String modId) {
+    private static List<EmbeddedJar> findEmbeddedJars(Path jarPath, String modId) {
         try (InputStream stream = Files.newInputStream(jarPath)) {
             return scanStream(stream, modId, new ArrayList<>());
         } catch (Exception e) {
@@ -203,7 +208,7 @@ public class Snitch {
         return false;
     }
 
-    private List<EmbeddedJar> scanStream(InputStream stream, String modId, List<EmbeddedJar> embeddedJarList) {
+    private static List<EmbeddedJar> scanStream(InputStream stream, String modId, List<EmbeddedJar> embeddedJarList) {
         try (ZipInputStream zipInputStream = new ZipInputStream(stream)) {
             ZipEntry entry;
             byte[] jsonData = null;

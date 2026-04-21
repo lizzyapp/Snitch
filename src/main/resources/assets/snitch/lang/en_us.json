@@ -1,0 +1,3 @@
+{
+  "snitch.modloadingissue.has_dependency": "%s has loaded dependency %s, which is flagged as unwanted."
+}
