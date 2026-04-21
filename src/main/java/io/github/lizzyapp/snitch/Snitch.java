@@ -128,7 +128,7 @@ public class Snitch {
             }
         });
         LOGGER.info("successfully queried all mod dependencies in {} ms", (System.currentTimeMillis() - milliseconds));
-        LOGGER.info("IT WAS THEM. " + snitchRecordList);
+        if (!snitchRecordList.isEmpty()) LOGGER.info("IT WAS THEM. " + snitchRecordList);
     }
 
     static class EmbeddedJar {
