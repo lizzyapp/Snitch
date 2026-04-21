@@ -7,6 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import cpw.mods.jarhandling.SecureJar;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.ModLoader;
+import net.neoforged.fml.ModLoadingIssue;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.loading.moddiscovery.ModFile;
 import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
@@ -64,6 +66,7 @@ public class Snitch {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public Snitch(IEventBus modEventBus, ModContainer modContainer) {
+        modEventBus.addListener(this::loadingFinalize);
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
@@ -83,7 +86,7 @@ public class Snitch {
     public static List<SnitchRecord> getSnitchRecords() {
         return snitchRecordList;
     }
-    public static void compileSnitchedMods() {
+    private void loadingFinalize(FMLLoadCompleteEvent event) {
         ModList modList = ModList.get();
         Optional<? extends ModContainer> myMod = modList.getModContainerById(MODID);
         IModInfo myModInfo = myMod.get().getModInfo();
@@ -112,9 +115,15 @@ public class Snitch {
             if (!embeddedJarList.isEmpty()) {
                 if (Config.DISPLAY_ALL.get()) LOGGER.info("Embedded dependencies of " + currentModID + ": " + embeddedJarList);
                 embeddedJarList.stream().filter(Snitch::tripsDependency).forEach(
-                    (embeddedJar) -> snitchRecordList.add(
-                        new SnitchRecord(currentModID, embeddedJar.modId)
-                    )
+                    (embeddedJar) -> {
+                        SnitchRecord snitchRecord = new SnitchRecord(currentModID, embeddedJar.modId);
+                        snitchRecordList.add(snitchRecord);
+
+                        ModLoader.addLoadingIssue(ModLoadingIssue.warning(
+                            "snitch.modloadingissue.has_dependency",
+                            snitchRecord.trippedMod, snitchRecord.contains
+                        ));
+                    }
                 );
             }
         });

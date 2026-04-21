@@ -16,9 +16,6 @@ description='''
 Calls out mods that load/use intrusive dependencies
 '''
 
-[[mixins]]
-config="${mod_id}.mixins.json"
-
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"
